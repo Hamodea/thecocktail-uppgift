@@ -1,0 +1,252 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Förhindrar att padding/margins påverkar storleken */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #f2f2f2;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  min-height: 100vh; 
+  overflow-x: hidden; 
+}
+
+.navbar {
+  background-color: #333;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 10px 20px; 
+  height: 60px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#logo img {
+  height: 40px;
+}
+
+.navbar .nav-links {
+  display: flex; 
+  gap: 15px; 
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 17px;
+  padding: 10px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.navbar a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.navbar a span {
+  font-size: 30px;
+  vertical-align: middle; 
+}
+
+
+.hero-img {
+  background-image: url('images/background.jpg');
+  height: 50vh; 
+  width: 100%; 
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 60px; 
+}
+
+.hero-text {
+  color: rgb(216, 136, 136);
+  font-size: 2.5rem; 
+  font-weight: bold;
+  text-align: center;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); 
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.4); 
+  border-radius: 10px; 
+}
+
+
+#home{
+    background-color: #f7f7f7;
+    padding: 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    justify-items: center;
+  }
+
+ #home h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-align: center; 
+  }
+  
+  .cocktail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 50%;
+  }
+  
+  .cocktail h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .cocktail img {
+    width: 50%;
+    height: 500px;
+
+    border-radius: 10px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background-color: #4CAF50;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #3e8e41;
+  }
+  
+  button#new-cocktail {
+    margin-bottom: 10px;
+  }
+  
+  button#see-more {
+    margin-top: 10px;
+  }
+  
+  #search {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+      border-radius: 8px;
+      max-width: 50%;
+      margin: 30px auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  #search h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+  }
+  
+.form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+ }
+  
+.form-group {
+      display: flex;
+      flex-direction: column;
+}
+  
+.form-group label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+}
+
+.form-group input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      outline: none;
+      transition: border 0.3s;
+}
+  
+.form-group input:focus {
+      border-color: #007bff;
+  }
+  
+.search-button {
+      background-color: #007bff;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      align-self: center;
+  }
+  
+  .search-button:hover {
+      background-color: #0056b3;
+  }
+  
+  #search-results {
+      margin-top: 20px;
+      list-style-type: none;
+      padding-left: 0;
+  }
+  
+  #search-results li {
+      background-color: #fff;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  section {
+    display: none;
+    padding: 2rem;
+}
+section.active {
+    display: block;
+}
+
+/* Stil för sökresultat */
+
+
+/* Stil för cocktaildetaljer */
+.cocktail-details {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+.cocktail-details img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+.cocktail-details ul {
+  list-style: none;
+  padding: 0;
+}
+.cocktail-details ul li {
+  margin: 5px 0;
+}
