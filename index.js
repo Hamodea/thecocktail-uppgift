@@ -1,48 +1,71 @@
 const baseUrl = "https://www.thecocktaildb.com/api/json/v1/1/random.php";
 
-
-
 const cocktailName = document.getElementById('cocktail-name');
 const cocktailImg = document.getElementById('cocktail-img');
 const newCocktailBtn = document.getElementById('new-cocktail');
 const seeMoreBtn = document.getElementById('see-more');
 
-let currentdrink = null;
-async function getRandomDrinks() {
+let currentCocktail = null;
+
+async function getRandomCocktail() {
     try {
-        const res = await fetch('https://www.thecocktaildb.com/api/json/v1/1/random.php');
-        const data = await res.json();
-        const drink = data.drinks[0];
-        currentdrink = drink;
-        cocktailName.textContent = drink.strDrink;
-        cocktailImg.src = drink.strDrinkThumb;
+        const response = await fetch(baseUrl);
+        const data = await response.json();
+        currentCocktail = data.drinks[0];
+        cocktailName.textContent = currentCocktail.strDrink;
+        cocktailImg.src = currentCocktail.strDrinkThumb;
+
+        // Återställ knappen "Add to Favorites"
+        addBtn.textContent = "Add to Favorites";
+        addBtn.style.backgroundColor = "#4CAF50";
+
     } catch (error) {
-        console.log(error);
+        console.error("Error fetching cocktail:", error);
     }
+}
 
-}   
+
+newCocktailBtn.addEventListener('click', () => getRandomCocktail());    
+  
+seeMoreBtn.addEventListener('click', () => {
+    if (seeMoreBtn.textContent === "See More" && currentCocktail) {
+        displayDrinkDetails(currentCocktail);
+        seeMoreBtn.textContent = "See Less";
+    } else if (seeMoreBtn.textContent === "See Less" && currentCocktail) {
+        const detailsSection = document.getElementById('details');
+        detailsSection.innerHTML = "";
+        seeMoreBtn.textContent = "See More";
+    }
+});
+
+const addBtn = document.getElementById('add-favorite');
+
+addBtn.addEventListener('click', () => {
+    if (addBtn.textContent === "Add to Favorites" && currentCocktail) {
+        saveFavoriteCocktails(currentCocktail);
+        addBtn.textContent = "Remove from Favorites";
+        addBtn.style.backgroundColor = "red";
+    } else if (addBtn.textContent === "Remove from Favorites" && currentCocktail) {
+        removeFavoriteCocktails(currentCocktail.idDrink);
+        addBtn.textContent = "Add to Favorites";
+        addBtn.style.backgroundColor = "#4CAF50";
+    }
+});
 
 
-async function getDrinkDetalis() {
-    if (!currentdrink) return;
-    const res = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${currentdrink.strDrink}`);
-    const data = await res.json();
-    if (!data || !data.drinks) return;
-    const drink = data.drinks[0];
-    const detailsSection = document.getElementById('details');
-    const detalisHtml = `
-    <p><strong>ID:</strong> ${drink.idDrink}</p>
-    <p><strong>Category:</strong> ${drink.strCategory}</p>
-    <p><strong>Alcoholic:</strong> ${drink.strAlcoholic}</p>
-    <p><strong>Glass:</strong> ${drink.strGlass}</p>
-    <p><strong>Instructions:</strong> ${drink.strInstructions}</p>
-    <p><strong>Ingredinet:</strong></p>
-    <ul>
-    ${getIngredientsList(drink)}
-    </ul>
-  `;
-  detailsSection.innerHTML = detalisHtml;
-  addFavoriteButton(drink);
+
+function displayDrinkDetails(drink) {
+    const detailsSection = document.querySelector('.active #details');
+    const detailsHtml = `
+        <p><strong>ID:</strong> ${drink.idDrink}</p>
+        <p><strong>Categori:</strong> ${drink.strCategory}</p>
+        <p><strong>Alkohol:</strong> ${drink.strAlcoholic}</p>
+        <p><strong>Glass:</strong> ${drink.strGlass}</p>
+        <p><strong>Instructions:</strong> ${drink.strInstructions}</p>
+        <p><strong>Ingredients:</strong></p>
+        <ul>${getIngredientsList(drink)}</ul>
+    `;
+    detailsSection.innerHTML = detailsHtml;
 }
 
 function getIngredientsList(drink) {
@@ -51,67 +74,59 @@ function getIngredientsList(drink) {
         const ingredient = drink[`strIngredient${i}`];
         const measure = drink[`strMeasure${i}`];
         if (ingredient) {
-            ingredients.push(`<li>${ingredient} - ${measure || 'to taste'}</li>`);
+            ingredients.push(`<li>${measure ? measure + ' ' : ''}${ingredient}</li>`);
         }
     }
     return ingredients.join('');
 }
 
-seeMoreBtn.addEventListener('click', () => {
-    if(seeMoreBtn.textContent === "See More" && currentdrink) {
-        getDrinkDetalis(currentdrink);
-        seeMoreBtn.textContent = "Hide Details";
-    } else {
-        const detailsSection = document.getElementById('details');
-        detailsSection.innerHTML = "";
-        seeMoreBtn.textContent = "See More";
-    }
-});
-
-newCocktailBtn.addEventListener('click', getRandomDrinks);
+// Navigation
+const homeLink = document.getElementById('home-link');
+const homeSection = document.getElementById('home');
+const searchLink = document.getElementById('search-link');
+const searchSection = document.getElementById('search');
 
 
+homeLink.addEventListener('click', () => showSection(homeSection));
+searchLink.addEventListener('click', () => showSection(searchSection));
+
+
+// Show initial section
+function showSection(section) {
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+    section.classList.add('active');
+}
+
+
+// search Form
 const searchForm = document.getElementById('search-form');
 const searchResults = document.getElementById('search-results');
-const paginationContainer = document.createElement('div');
-paginationContainer.id = 'pagination';
-document.getElementById("search").appendChild(paginationContainer);
-
+const pagination = document.createElement('div');
+pagination.id = 'pagination';
+document.getElementById('search').appendChild(pagination);
 
 let currentPage = 1;
-let resultsPerPage = 10;
+let cocktailsPerPage = 10;
 let allResults = [];
 
-searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Hämta värden från alla fält
-    const name = document.getElementById('search-name').value.trim();
-    const ingredient = document.getElementById('search-ingredient').value.trim();
-    const category = document.getElementById('search-category').value.trim();
-    const glass = document.getElementById('search-glass').value.trim();
-
-    // Rensa sökresultaten
-    searchResults.innerHTML = '';
-
-    // Validera att endast ett fält används
-    const inputs = [name, ingredient, category, glass].filter(value => value !== '');
-    if (inputs.length !== 1) {
-        alert('Fyll endast i ETT fält för att söka!');
-        return;
-    }
-
+searchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    currentPage = 1;
+    const searchName = document.getElementById('search-name').value;
+    const searchIngredient = document.getElementById('search-ingredient').value;
+    const searchCategory = document.getElementById('search-category').value;
+    const searchGlass = document.getElementById('search-glass').value;
     let url = '';
 
-    // Bygg URL beroende på vilket fält som är ifyllt
-    if (name) {
-        url = `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${name}`;
-    } else if (ingredient) {
-        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${ingredient}`;
-    } else if (category) {
-        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${category}`;
-    } else if (glass) {
-        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?g=${glass}`;
+    // Bygg URL beroende på vilket faltet som är ifyllt
+    if (searchName) {
+        url = `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${searchName}`;
+    } else if (searchIngredient) {
+        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${searchIngredient}`;
+    } else if (searchCategory) {
+        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${searchCategory}`;
+    } else if (searchGlass) {
+        url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?g=${searchGlass}`;
     }
 
     try {
@@ -120,14 +135,14 @@ searchForm.addEventListener('submit', async (e) => {
 
         if (!data.drinks) {
             searchResults.innerHTML = '<li>No results found</li>';
-            paginationContainer.innerHTML = '';
+            pagination.innerHTML = '';
             return;
         }
 
         // Spara alla resultat och visa första sidan
         allResults = data.drinks;
         currentPage = 1;
-        renderResults();
+       displaySearchResults();
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -135,13 +150,13 @@ searchForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Funktion för att rendera sökresultat på aktuell sida
-function renderResults() {
-    searchResults.innerHTML = '';
-    paginationContainer.innerHTML = '';
 
-    const start = (currentPage - 1) * resultsPerPage;
-    const end = start + resultsPerPage;
+function displaySearchResults() {
+    searchResults.innerHTML = '';
+    pagination.innerHTML = '';
+
+    const start = (currentPage - 1) * cocktailsPerPage;
+    const end = start + cocktailsPerPage;
     const pageResults = allResults.slice(start, end);
 
     pageResults.forEach(drink => {
@@ -149,165 +164,144 @@ function renderResults() {
         li.innerHTML = `
             <img src="${drink.strDrinkThumb}" alt="${drink.strDrink}">
             <p><strong>${drink.strDrink}</strong></p>
+            <button class="add-to-favorites" data-id="${drink.idDrink}">Add to Favorites</button>
         `;
-        li.addEventListener('click', () => displayDetailsInSearch(drink));
+        li.addEventListener('click', () => fetchDrinkDetails(drink));
         searchResults.appendChild(li);
+
+        // Add event listener for "Add to Favorites" button
+        const addToFavoritesBtn = li.querySelector('.add-to-favorites');
+        addToFavoritesBtn.addEventListener('click', () => {
+            if (addToFavoritesBtn.textContent === "Add to Favorites") {
+                saveFavoriteCocktails(drink);
+                addToFavoritesBtn.textContent = "Remove from Favorites";
+                addToFavoritesBtn.style.backgroundColor = "red";
+            } else if (addToFavoritesBtn.textContent === "Remove from Favorites") {
+                removeFavoriteCocktails(drink.idDrink);
+                addToFavoritesBtn.textContent = "Add to Favorites";
+                addToFavoritesBtn.style.backgroundColor = "#4CAF50";
+            }
+        });
     });
 
     renderPaginationButtons();
 }
 
-// Funktion för att skapa pagineringsknappar
 function renderPaginationButtons() {
-    const totalPages = Math.ceil(allResults.length / resultsPerPage);
+    const totalPages = Math.ceil(allResults.length / cocktailsPerPage);
 
     if (currentPage > 1) {
         const prevButton = document.createElement('button');
         prevButton.textContent = 'Previous';
         prevButton.addEventListener('click', () => {
             currentPage--;
-            renderResults();
+            displaySearchResults();
         });
-        paginationContainer.appendChild(prevButton);
+        pagination.appendChild(prevButton);
     }
 
     const pageInfo = document.createElement('span');
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-    paginationContainer.appendChild(pageInfo);
+    pagination.appendChild(pageInfo);
 
     if (currentPage < totalPages) {
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Next';
         nextButton.addEventListener('click', () => {
             currentPage++;
-            renderResults();
+            displaySearchResults();
         });
-        paginationContainer.appendChild(nextButton);
+        pagination.appendChild(nextButton);
     }
 }
 
-
-
-
-// Funktion för att visa detaljer i söksektionen
-async function displayDetailsInSearch(drink) {
+async function fetchDrinkDetails(drink) {
     try {
-        // Hämta fullständig information baserat på idDrink
-        const res = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${drink.idDrink}`);
-        const data = await res.json();
-        
+        const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${drink.idDrink}`);
+        const data = await response.json();
+
         if (!data.drinks || data.drinks.length === 0) {
             searchResults.innerHTML = '<p>Details not found</p>';
             return;
         }
-
-        const fullDrink = data.drinks[0];
-        const detailsHTML = `
-            <div class="cocktail-details">
-                <h2>${fullDrink.strDrink}</h2>
-                <img src="${fullDrink.strDrinkThumb}" alt="${fullDrink.strDrink}">
-                <h3>Details</h3>
-                <p><strong>Category:</strong> ${fullDrink.strCategory}</p>
-                <p><strong>Glass:</strong> ${fullDrink.strGlass}</p>
-                <p><strong>Instructions:</strong> ${fullDrink.strInstructions}</p>
-                <p><strong>Ingredients:</strong></p>
-                <ul>
-                    ${getIngredientsList(fullDrink)}
-                </ul>
-            </div>
-        `;
-
-        // Lägg till detaljerna under sökresultaten
-        searchResults.innerHTML = detailsHTML;
+        const details = data.drinks[0];
+        displayDrinkDetails(details);
     } catch (error) {
-        console.error('Error fetching drink details:', error);
-        searchResults.innerHTML = '<p>Error fetching drink details. Please try again.</p>';
+        console.error("Error fetching drink details:", error);
+        return null;
     }
 }
 
 
-const searchLink = document.getElementById('search-link');
-const searchSection = document.getElementById('search');
-const homeLink = document.getElementById('home-link');
-const homeSection = document.getElementById('home');
+//favorit Section
 const favoritesLink = document.getElementById('favorites-link');
 const favoritesSection = document.getElementById('favorites');
+const favoriteList = document.getElementById('favorites-list');
 
-homeLink.addEventListener('click', () => showSection(homeSection));
-searchLink.addEventListener('click', () => showSection(searchSection));
+favoritesLink.addEventListener('click', () => {
+    showSection(favoritesSection);
+    displayFavoriteCocktails();
+});
 
-function showSection(section) {
-    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-    section.classList.add('active');
-}
+let favoriteCocktails = JSON.parse(localStorage.getItem('favoriteCocktails')) || [];
 
-
-// Variabler
-favoritesLink.addEventListener('click', () => showSection(favoritesSection));
-const favoritesList = document.getElementById('favorites-list');
-let favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Ladda favoriter från LocalStorage
-
-// Funktion för att spara till favoriter
-function toggleFavorite(cocktail) {
-    const index = favorites.findIndex(fav => fav.idDrink === cocktail.idDrink);
+function saveFavoriteCocktails(currentCocktail) {
+    const index = favoriteCocktails.findIndex(cocktail => cocktail.idDrink === currentCocktail.idDrink);
     if (index === -1) {
-        favorites.push(cocktail); // Lägg till i favoriter
-        alert(`${cocktail.strDrink} added to favorites!`);
+        favoriteCocktails.push(currentCocktail);
+        alert(`${currentCocktail.strDrink} added to favorites`)
     } else {
-        favorites.splice(index, 1); // Ta bort från favoriter
-        alert(`${cocktail.strDrink} removed from favorites!`);
+        alert(`${currentCocktail.strDrink} is already in favorites`)
     }
-    localStorage.setItem('favorites', JSON.stringify(favorites)); // Uppdatera LocalStorage
-    updateFavoriteButton(cocktail.idDrink);
+    localStorage.setItem('favoriteCocktails', JSON.stringify(favoriteCocktails));
+    styleFavoriteSection();
+
 }
 
-// Funktion för att uppdatera "Favorite" knappen
-function updateFavoriteButton(cocktailId) {
-    const isFavorite = favorites.some(fav => fav.idDrink === cocktailId);
-    document.getElementById('favorite-btn').textContent = isFavorite ? 'Remove from Favorites' : 'Add to Favorites';
+function removeFavoriteCocktails(cocktailId) {
+    const index = favoriteCocktails.findIndex(cocktail => cocktail.idDrink === cocktailId);
+    if (index !== -1) {
+        const cocktailName = favoriteCocktails[index].strDrink;
+        favoriteCocktails.splice(index, 1);
+        localStorage.setItem('favoriteCocktails', JSON.stringify(favoriteCocktails));
+        alert(`${cocktailName} removed from favorites`)
+        displayFavoriteCocktails();
+        styleFavoriteSection();
+    }
 }
 
-// Visa favoriter i favoritsidan
-function displayFavorites() {
-    favoritesList.innerHTML = ''; // Rensa listan
-    if (favorites.length === 0) {
-        favoritesList.innerHTML = '<li>No favorites added yet.</li>';
-        return;
-    }
-    favorites.forEach(drink => {
+function displayFavoriteCocktails() {
+    favoriteList.innerHTML = '';
+    favoriteCocktails.forEach(cocktail => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <img src="${drink.strDrinkThumb}" alt="${drink.strDrink}" width="100">
-            <span>${drink.strDrink}</span>
-            <button onclick="removeFavorite('${drink.idDrink}')">Remove</button>
+            <img src="${cocktail.strDrinkThumb}" alt="${cocktail.strDrink}">
+            <p><strong>${cocktail.strDrink}</strong></p>
+            <button class="remove-favorite" data-id="${cocktail.idDrink}">Remove</button>
         `;
-        favoritesList.appendChild(li);
-        console.log(favorites);
+        favoriteList.appendChild(li);
+
+        const removeFavoriteBtn = li.querySelector('.remove-favorite');
+        removeFavoriteBtn.addEventListener('click', () => {
+            removeFavoriteCocktails(cocktail.idDrink);
+        });
+
     });
 }
 
-// Ta bort en favorit
-function removeFavorite(cocktailId) {
-    favorites = favorites.filter(fav => fav.idDrink !== cocktailId);
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    displayFavorites();
+
+// style favorit Section
+function styleFavoriteSection() {
+    favoritesLink.style.transition = 'color 0.3s ease'; // Add smooth transition for color
+    if (favoriteCocktails.length > 0) {
+        favoritesLink.style.color = 'red';
+    } else {
+        favoritesLink.style.color = ''; // Reset to default color
+    }
 }
 
-// Visa favoritsidan
-favoritesLink.addEventListener('click', () => {
-    showSection(favoritesSection);
-    displayFavorites();
+
+document.addEventListener('DOMContentLoaded', () => {
+    styleFavoriteSection();
+    getRandomCocktail();
 });
-
-// Lägg till Favorite-knapp där detaljer visas
-function addFavoriteButton(cocktail) {
-    const detailsDiv = document.getElementById('details');
-    detailsDiv.innerHTML += `
-        <button id="favorite-btn">${favorites.some(fav => fav.idDrink === cocktail.idDrink) ? 'Remove from Favorites' : 'Add to Favorites'}</button>
-    `;
-    document.getElementById('favorite-btn').addEventListener('click', () => toggleFavorite(cocktail));
-}
-
-
-getRandomDrinks();
-
